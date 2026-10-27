@@ -1,0 +1,9 @@
+.logo {
+  animation: bounce 0.5s infinite alternate;
+}
+
+@keyframes bounce {
+  100% {
+    transform: translateY(-90px);
+  }
+}

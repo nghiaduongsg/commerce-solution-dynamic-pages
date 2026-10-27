@@ -1,0 +1,75 @@
+import React, { useEffect } from 'react';
+import GenericCheckbox from '@pkg-common/atomics/GenericCheckbox/GenericCheckbox';
+import ValidationErrors from '@pkg-common/components/ValidationErrors/ValidationErrors';
+import useFormDisabledValues from '@pkg-form/validations/hooks/useFormDisabledValues';
+import { getWidgetArrayParentId, getWidgetPropertyId } from '@pkg-form/validations/utils/widgetUtils';
+import useWidgetUtils from '@pkg-form/hooks/useWidgetUtils';
+import useDefaultValueFrom from '@pkg-form/hooks/useDefaultValueFrom';
+import useFormField from '@pkg-entity/hooks/useFormField';
+import { FormWidgetProps } from '@pkg-form/types';
+
+const CheckWidget = ({
+  schema,
+  id,
+  disabled,
+  readonly,
+  autofocus,
+  onBlur,
+  onFocus,
+  options,
+  uiSchema,
+  value: innerValue,
+  onChange,
+  serverErrors,
+  diffs,
+  formContext,
+}: FormWidgetProps) => {
+  const { defaultValueFrom = { code: '', jsonPath: [] }, validations } = options;
+  const defaultValue = uiSchema['ui:value'];
+  const useDefaultMechanism = formContext?.mechanism === 'DEFAULT';
+  const { value, setFieldValue } = useFormField(
+    id,
+    useDefaultMechanism
+      ? {
+          value: innerValue,
+          onChange,
+        }
+      : undefined
+  );
+
+  const { readOnlyLabel } = useWidgetUtils(schema, options, formContext);
+
+  useDefaultValueFrom(id, defaultValueFrom);
+
+  const parentId = getWidgetArrayParentId(id);
+  const propertyId = getWidgetPropertyId(id);
+  const { disabledValues } = useFormDisabledValues(parentId, propertyId);
+
+  useEffect(() => {
+    setFieldValue(defaultValue || value || false);
+  }, [defaultValue, value]);
+
+  return (
+    <>
+      <GenericCheckbox
+        id={id}
+        label={readOnlyLabel}
+        value={value}
+        disabled={
+          disabled ||
+          (disabledValues.length > 0 && (disabledValues as boolean[]).includes(true) && !value)
+        }
+        readOnly={readonly}
+        required={(validations || {}).required}
+        autofocus={autofocus}
+        onChange={setFieldValue}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        errorsList={[...(serverErrors || [])]}
+      />
+      <ValidationErrors clientErrors={[]} serverErrors={serverErrors} diffs={diffs} dirty={true} />
+    </>
+  );
+};
+
+export default CheckWidget;

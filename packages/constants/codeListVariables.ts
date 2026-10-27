@@ -1,0 +1,37 @@
+// Card types
+export const VALID_CODE_LIST = 'validCodelist';
+
+export const SYSTEM_PARAMETERS = 'SYSTEM_PARAMETERS';
+export const CURRENCIES = 'CURRENCIES';
+export const LANGUAGES = 'LANGUAGES';
+export const COUNTRIES = 'COUNTRIES';
+export const ENTITIES = 'ENTITIES';
+export const THEMES = 'THEMES';
+
+export const SOURCE_CURRENCY_MODE = 'SOURCE_CURRENCY_MODE';
+export const HIDE_INACTIVE_ITEMS = 'HIDE_INACTIVE_ITEMS';
+export const HIDE_EXPIRED_ITEMS = 'HIDE_EXPIRED_ITEMS';
+export const REVERSE_SIGN = 'REVERSE_SIGN';
+export const DAYS_RETENTION_PERIOD_READ_NOTIFICATION = 'DAYS_RETENTION_PERIOD_READ_NOTIFICATION';
+
+export const FORM_TYPE_CATEGORIES = 'FORM_TYPE_CATEGORIES';
+
+export const DATE_CODES = {
+  datetime: 'DATE_TIME_FORMAT',
+  date: 'DATE_FORMAT',
+  monthDay: 'MONTH_DAY_FORMAT',
+  time: 'TIME_FORMAT',
+};
+
+export const BOOLEAN_CODELIST_ATTRIBUTES = {
+  YES: 'YES',
+  NO: 'NO',
+};
+
+export const REFDATA_ATTRIBUTE_KEY = {
+  REQUIRES_CHANGE_REASON: 'requiresChangeReason',
+};
+
+export const VALIDATIONS_INDICATOR = 'VALIDATIONS_INDICATOR';
+export const HIGHLIGHT_MANDATORY = 'HIGHLIGHT_MANDATORY';
+export const HIGHLIGHT_OPTIONAL = 'HIGHLIGHT_OPTIONAL';

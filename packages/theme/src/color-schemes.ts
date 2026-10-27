@@ -1,0 +1,181 @@
+import { alpha } from '@mui/material';
+
+export const tokens = {
+  neutral: {
+    50: '#FFFFFF',
+    100: '#EFEFEF',
+    200: '#DCDCDC',
+    300: '#BDBDBD',
+    400: '#989898',
+    500: '#7C7C7C',
+    600: '#656565',
+    700: '#525252',
+    800: '#464646',
+    900: '#3D3D3D',
+    950: '#292929',
+  },
+  yellow: {
+    50: '#FEFCE8',
+    100: '#FFFAC2',
+    200: '#FFF287',
+    300: '#FFE343',
+    400: '#FFCC02',
+    500: '#EFB603',
+    600: '#CE8C00',
+    700: '#A46304',
+    800: '#884D0B',
+    900: '#733F10',
+    950: '#432005',
+  },
+  info: {
+    50: '#EDFAFF',
+    100: '#D7F2FF',
+    200: '#B8EAFF',
+    300: '#87DFFF',
+    400: '#4FCAFF',
+    500: '#26AEFF',
+    600: '#0F91FF',
+    700: '#0872E2',
+    800: '#0E60BF',
+    900: '#125296',
+    950: '#10325B',
+  },
+  success: {
+    50: '#EDFFF5',
+    100: '#D4FFE9',
+    200: '#ACFFD5',
+    300: '#68FFB6',
+    400: '#24FF8E',
+    500: '#00EE6F',
+    600: '#00C758',
+    700: '#009848',
+    800: '#027D3F',
+    900: '#064335',
+    950: '#00381B',
+  },
+  warning: {
+    50: '#FFFBEC',
+    100: '#FFF0D4',
+    200: '#FFDCA7',
+    300: '#FFC270',
+    400: '#FF9D36',
+    500: '#FF800F',
+    600: '#F16405',
+    700: '#D54F07',
+    800: '#9E3A0E',
+    900: '#7F320F',
+    950: '#451705',
+  },
+  error: {
+    50: '#FFF0F2',
+    100: '#FFDEE2',
+    200: '#FFC3CA',
+    300: '#FF99A5',
+    400: '#FF5F72',
+    500: '#FF2D46',
+    600: '#F40E29',
+    700: '#CC071E',
+    800: '#AA0A1D',
+    900: '#8C101E',
+    950: '#4D020B',
+  },
+};
+
+export const colorSchemes = {
+  dark: {
+    palette: {
+      mode: 'dark',
+      common: {
+        white: '#000000',
+        black: alpha(tokens.neutral[50], 0.6),
+      },
+      text: {
+        primary: tokens.neutral[100],
+        secondary: tokens.neutral[300],
+        disabled: tokens.neutral[500],
+      },
+      primary: {
+        dark: tokens.info[950],
+        main: tokens.info[700],
+        light: tokens.info[900],
+        contrastText: tokens.neutral[50],
+      },
+      secondary: {
+        dark: tokens.yellow[900],
+        main: tokens.yellow[600],
+        light: tokens.yellow[100],
+        contrastText: '#000000',
+      },
+      error: {
+        main: tokens.error[600],
+        contrastText: tokens.neutral[50],
+      },
+      button: {
+        main: tokens.yellow[600],
+      },
+      success: {
+        main: tokens.success[700],
+        contrastText: tokens.neutral[50],
+      },
+      warning: {
+        main: tokens.warning[700],
+        contrastText: tokens.neutral[50],
+      },
+      divider: tokens.neutral[800],
+    },
+  },
+  light: {
+    palette: {
+      common: {
+        black: '#000000',
+        white: tokens.neutral[50],
+      },
+      primary: {
+        dark: tokens.info[900],
+        main: tokens.info[800],
+        light: tokens.info[50],
+        contrastText: tokens.neutral[50],
+      },
+      secondary: {
+        dark: tokens.yellow[800],
+        main: tokens.yellow[700],
+        light: tokens.yellow[100],
+        contrastText: tokens.neutral[50],
+      },
+      info: {
+        main: tokens.info[700],
+        contrastText: tokens.neutral[50],
+      },
+      error: {
+        main: tokens.error[700],
+        contrastText: tokens.neutral[50],
+      },
+      success: {
+        main: tokens.success[800],
+        contrastText: tokens.neutral[50],
+      },
+      warning: {
+        main: tokens.warning[800],
+        contrastText: tokens.neutral[50],
+      },
+      button: {
+        light: tokens.neutral[200],
+        main: tokens.neutral[400],
+      },
+      divider: tokens.neutral[200],
+      grey: {
+        100: tokens.neutral[100],
+        200: tokens.neutral[200],
+        300: tokens.neutral[300],
+        400: tokens.neutral[400],
+        500: tokens.neutral[500],
+        600: tokens.neutral[600],
+      },
+      text: {
+        primary: tokens.neutral[950],
+        secondary: tokens.neutral[700],
+        disabled: tokens.neutral[500],
+      },
+    },
+  },
+};

@@ -1,0 +1,17 @@
+export const ADD_ITEM_TO_LIST_SHORTCUT = 'Shift + Alt + A';
+export const REFRESH_LIST_SHORTCUT = 'Shift + Alt + L';
+export const OPEN_LIST_FILTERS_SHORTCUT = 'Shift + Alt + F';
+export const CLOSE_LIST_FILTERS_SHORTCUT = 'Shift + Alt + F';
+export const OPEN_LIST_COLUMN_CONFIGURATION_SHORTCUT = 'Shift + Alt + C';
+export const CLOSE_LIST_COLUMN_CONFIGURATION_SHORTCUT = 'Shift + Alt + C';
+export const APPLY_SELECTED_FILTER_TO_LIST_SHORTCUT = 'Shift + Alt + Enter';
+export const CLEAR_SELECTED_FILTERS_SHORTCUT = 'Shift + Alt + K';
+export const DELETE_FOCUSED_ITEM_FROM_LIST_SHORTCUT = 'Shift + Alt + R';
+export const DUPLICATE_FOCUSED_ITEM_FROM_LIST_SHORTCUT = 'Shift + Alt + Z';
+export const EDIT_FOCUSED_ITEM_FROM_LIST_SHORTCUT = 'Shift + Alt + V';
+export const EDIT_FOCUSED_ITEM_FROM_LIST_IN_NEW_TAB_SHORTCUT = 'Shift + Alt + J';
+export const OPEN_HELP_LINK_SHORTCUT = 'Shift + Alt + G';
+export const OPEN_SETTINGS_SHORTCUT = 'Shift + Alt + B';
+export const CLOSE_MODALS_SHORTCUT = 'Escape';
+export const SAVE_FORM_SHORTCUT = 'Control + Alt + S';
+export const BACK_BUTTON_SHORTCUT = 'Control + Alt + Backspace';

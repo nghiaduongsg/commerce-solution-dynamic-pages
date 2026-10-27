@@ -1,0 +1,37 @@
+import { AnyType, InfoSchema } from '@pkg-common/types';
+import { CleaveOptions } from '@types/cleave.js';
+
+export type GenericTextFieldProps = {
+  id: string;
+  value?: string | number | integer;
+  label?: string | number | integer;
+  type?: 'string' | 'number' | 'integer' | 'text' | 'password';
+  disabled?: boolean;
+  readonly?: boolean;
+  required?: boolean;
+  autofocus?: boolean;
+  rows?: string | number;
+  labelAlignment?: 'top' | 'left';
+  multiline?: boolean;
+  textAreaProps?: AnyType;
+  emptyValue?: string | null | undefined;
+  onChange?: (string) => void;
+  onClick?: () => void;
+  onBlur?: (id, string) => void;
+  onFocus?: (id, string) => void;
+  inputProps?: any;
+  errors?: null | JSX.Element;
+  valid?: boolean;
+  additionalInfo?: string;
+  description?: string;
+  startAdornment?: string | JSX.Element;
+  showLabel?: boolean;
+  fullWidth?: boolean;
+  widthSize?: 'xs' | 'sm' | 'md' | 'lg';
+  variant?: 'filled' | 'standard' | 'outlined' | undefined;
+  mask?: CleaveOptions & { readOnlyOptions?: CleaveOptions };
+  testId?: string;
+  placeHolder?: string;
+  ref?: RefObject<HTMLInputElement>;
+  styledFieldLabel?: React.ReactNode;
+};
