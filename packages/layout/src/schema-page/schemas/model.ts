@@ -11,6 +11,7 @@ export type Conversation = {
   name: string;
   initials: string;
   color: string;
+  avatar?: string;
   channel: Channel;
   handle: string;
   topic: string;

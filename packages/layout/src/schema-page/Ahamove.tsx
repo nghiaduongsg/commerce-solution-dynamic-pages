@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import type { TextFieldProps } from '@mui/material/TextField';
@@ -6,18 +6,20 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
+  ButtonBase,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
-  MenuItem,
+  LinearProgress,
   Paper,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
+import PersonRounded from '@mui/icons-material/PersonRounded';
+import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
 
 import AhamoveLocation, { LocationChoice } from './AhamoveLocation';
 import { AhamoveData } from './schemas/ahamove';
@@ -26,6 +28,14 @@ export { isAhamoveData } from './schemas/ahamove';
 const Input = TextField as unknown as React.ComponentType<
   Omit<TextFieldProps<'outlined'>, 'variant'>
 >;
+// Fixed Ahamove-style brand accents. Static strings keep sx cheap to serialise
+// on the frequent form re-renders instead of re-running theme callbacks.
+const BRAND = '#00B14F';
+const BRAND_DARK = '#007A36';
+const BRAND_SOFT = 'rgba(0,177,79,0.08)';
+const HAIRLINE = 'rgba(0,0,0,0.12)';
+const DISABLED_BG = 'rgba(0,0,0,0.12)';
+const DISABLED_TEXT = 'rgba(0,0,0,0.38)';
 type Stop = {
   address: string;
   name: string;
@@ -44,6 +54,16 @@ const emptyStop = (): Stop => ({
 });
 const cancellable = ['IDLE', 'ASSIGNING', 'ACCEPTED', 'CONFIRMING', 'PAYING'];
 const statuses = [...cancellable, 'IN_PROCESS', 'COMPLETED', 'CANCELLED'];
+const payments = ['CASH', 'BALANCE', 'CASH_BY_RECIPIENT'];
+// Status pill colour by lifecycle stage; the chip text stays a translation key.
+const statusStyle = (status: string): { color: string; bg: string } =>
+  status === 'COMPLETED'
+    ? { color: '#027D3F', bg: 'rgba(2,125,63,0.14)' }
+    : status === 'CANCELLED'
+      ? { color: '#CC071E', bg: 'rgba(204,7,30,0.12)' }
+      : status === 'IN_PROCESS'
+        ? { color: '#0872E2', bg: 'rgba(8,114,226,0.12)' }
+        : { color: '#B45309', bg: 'rgba(180,83,9,0.14)' };
 type Order = {
   _id: string;
   status: string;
@@ -66,6 +86,337 @@ export function safeTrackingLink(value: unknown): string | undefined {
   }
   return undefined;
 }
+
+// A selectable payment tile. Memoised with stable props so typing elsewhere in
+// the form never re-renders it, and kept to two DOM nodes to keep the tests'
+// accessibility queries (which walk the whole tree) fast.
+const OptionCard = memo(function OptionCard({
+  selected,
+  disabled,
+  value,
+  onSelect,
+  title,
+}: {
+  selected: boolean;
+  disabled: boolean;
+  value: string;
+  onSelect: (value: string) => void;
+  title: string;
+}) {
+  return (
+    <ButtonBase
+      role="radio"
+      aria-checked={selected}
+      disabled={disabled}
+      onClick={() => onSelect(value)}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        width: '100%',
+        p: 1.5,
+        borderRadius: 3,
+        border: 2,
+        fontWeight: 600,
+        fontSize: '0.875rem',
+        textAlign: 'left',
+        color: selected ? BRAND : 'text.primary',
+        borderColor: selected ? BRAND : 'divider',
+        bgcolor: selected ? BRAND_SOFT : 'background.paper',
+        transition: 'border-color .15s ease, background-color .15s ease',
+        '&:hover': { borderColor: selected ? BRAND : 'text.disabled' },
+        '&.Mui-disabled': { opacity: 0.5 },
+      }}
+    >
+      {title}
+    </ButtonBase>
+  );
+});
+
+// Tracking + live status column. Memoised so booking-form keystrokes, which do
+// not touch any of its props, never trigger a re-render of this subtree.
+const TrackPanel = memo(function TrackPanel({
+  lookup,
+  order,
+  busy,
+  label,
+  money,
+  t,
+  onLookupChange,
+  onTrack,
+  onGetLink,
+  onOpenCancel,
+}: {
+  lookup: string;
+  order: Order | null;
+  busy: boolean;
+  label: (key: string) => string;
+  money: (amount: number) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
+  onLookupChange: (value: string) => void;
+  onTrack: () => void;
+  onGetLink: (order: Order) => void;
+  onOpenCancel: () => void;
+}) {
+  const sharedLink = safeTrackingLink(order?.shared_link);
+  return (
+    <Stack spacing={{ xs: 2, md: 3 }} sx={{ position: { md: 'sticky' }, top: { md: 16 } }}>
+      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4, boxShadow: 'none' }}>
+        <Stack
+          spacing={2}
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onTrack();
+          }}
+        >
+          <Typography
+            component="h2"
+            variant="subtitle1"
+            sx={{ fontWeight: 700, pl: 1.5, borderLeft: 3, borderColor: BRAND, lineHeight: 1.2 }}
+          >
+            {label('track')}
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
+            {label('trackHint')}
+          </Typography>
+          <Input
+            label={label('orderId')}
+            required
+            disabled={busy}
+            value={lookup}
+            onChange={(e) => onLookupChange(e.target.value)}
+            slotProps={{ htmlInput: { pattern: '[A-Za-z0-9_\\-]{1,80}' } }}
+          />
+          <Button type="submit" variant="outlined" disabled={busy}>
+            {label('refresh')}
+          </Button>
+        </Stack>
+      </Paper>
+
+      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4, boxShadow: 'none' }}>
+        <Stack spacing={2}>
+          <Typography component="h2" variant="subtitle1" sx={{ fontWeight: 700 }}>
+            {label('summaryTitle')}
+          </Typography>
+          {!order ? (
+            <Typography color="text.secondary" sx={{ py: 2 }}>
+              {label('empty')}
+            </Typography>
+          ) : (
+            <>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                flexWrap="wrap"
+                gap={1}
+              >
+                <Stack>
+                  <Typography variant="caption" color="text.secondary">
+                    {label('orderRef')}
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, fontFamily: 'monospace', wordBreak: 'break-all' }}
+                  >
+                    {order._id}
+                  </Typography>
+                </Stack>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 999,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: statusStyle(order.status).color,
+                    bgcolor: statusStyle(order.status).bg,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: statusStyle(order.status).color,
+                    }}
+                  />
+                  {label(
+                    statuses.includes(order.status) ? `statuses.${order.status}` : 'unknownStatus',
+                  )}
+                </Box>
+              </Stack>
+              {typeof order.total_pay === 'number' && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {label('totalPaid')}
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                    {money(order.total_pay)}
+                  </Typography>
+                </Box>
+              )}
+              {order.path && order.path.length > 0 && (
+                <Stack spacing={2}>
+                  {order.path.map((stop, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 1.5 }}>
+                      <Box
+                        aria-hidden
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          pt: '6px',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: index === 0 ? '50%' : '3px',
+                            bgcolor: index === 0 ? BRAND : 'text.primary',
+                          }}
+                        />
+                        {index < order.path!.length - 1 && (
+                          <Box
+                            sx={{
+                              flexGrow: 1,
+                              width: '2px',
+                              my: 0.5,
+                              minHeight: 20,
+                              bgcolor: 'divider',
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography
+                          variant="overline"
+                          sx={{ color: 'text.secondary', fontWeight: 700 }}
+                        >
+                          {label(index === 0 ? 'pickup' : 'dropoff')}
+                        </Typography>
+                        <Typography sx={{ wordBreak: 'break-word' }}>{stop.address}</Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          {stop.name} · {stop.mobile}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+              {order.supplier_name && (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <PersonRounded fontSize="small" color="action" />
+                  <Typography>{t('ahamove.driver', { name: order.supplier_name })}</Typography>
+                </Stack>
+              )}
+              {sharedLink ? (
+                <Button
+                  component="a"
+                  href={sharedLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="outlined"
+                  startIcon={<OpenInNewRounded />}
+                >
+                  {label('journey')}
+                </Button>
+              ) : (
+                <Button variant="outlined" disabled={busy} onClick={() => onGetLink(order)}>
+                  {label('getLink')}
+                </Button>
+              )}
+              <Divider />
+              <Button
+                color="error"
+                variant="outlined"
+                disabled={busy || !cancellable.includes(order.status)}
+                onClick={onOpenCancel}
+              >
+                {label('cancel')}
+              </Button>
+              <Typography variant="caption" color="text.secondary">
+                {label('cancelHint')}
+              </Typography>
+            </>
+          )}
+        </Stack>
+      </Paper>
+    </Stack>
+  );
+});
+
+// One pickup/drop-off stop: timeline marker, location search and contact fields.
+// Memoised on its own stop so editing one stop never re-renders the other.
+const StopFields = memo(function StopFields({
+  index,
+  stop,
+  url,
+  locked,
+  label,
+  onQuery,
+  onSelect,
+  onContactChange,
+}: {
+  index: number;
+  stop: Stop;
+  url: string;
+  locked: boolean;
+  label: (key: string) => string;
+  onQuery: (value: string) => void;
+  onSelect: (value: LocationChoice) => void;
+  onContactChange: (index: number, key: 'name' | 'mobile', value: string) => void;
+}) {
+  return (
+    <Stack spacing={1.5} sx={{ minWidth: 0 }}>
+      <Typography
+        variant="overline"
+        sx={{
+          fontWeight: 700,
+          color: 'text.secondary',
+          pl: 1.5,
+          borderLeft: 6,
+          borderColor: index === 0 ? BRAND : 'text.primary',
+          lineHeight: 1.6,
+        }}
+      >
+        {label(index === 0 ? 'pickup' : 'dropoff')}
+      </Typography>
+      <AhamoveLocation
+        url={url}
+        query={stop.address}
+        selected={stop.location}
+        disabled={locked}
+        onQuery={onQuery}
+        onSelect={onSelect}
+      />
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+        {(['name', 'mobile'] as const).map((key) => (
+          <Input
+            key={key}
+            fullWidth
+            label={label(key)}
+            value={stop[key]}
+            required
+            type={key === 'mobile' ? 'tel' : 'text'}
+            slotProps={{
+              htmlInput: {
+                pattern: key === 'mobile' ? '[+]?[0-9]{9,15}' : '.*\\S.*',
+                maxLength: 500,
+              },
+            }}
+            onChange={(e) => onContactChange(index, key, e.target.value)}
+          />
+        ))}
+      </Box>
+    </Stack>
+  );
+});
 
 export default function Ahamove({
   title,
@@ -103,52 +454,125 @@ export default function Ahamove({
     setQuote(null);
     setConfirmBooking(false);
   };
+  // Stable handlers (setters + functional updates) so memoised children don't
+  // re-render on every keystroke elsewhere in the form.
+  const selectPayment = useCallback((next: string) => {
+    setQuote(null);
+    setConfirmBooking(false);
+    setPayment(next);
+  }, []);
+  const changeContact = useCallback((index: number, key: 'name' | 'mobile', next: string) => {
+    setStops((prev) => prev.map((stop, i) => (i === index ? { ...stop, [key]: next } : stop)));
+  }, []);
+  const locationHandlers = useMemo(
+    () =>
+      [0, 1].map((index) => ({
+        onQuery: (address: string) => {
+          setQuote(null);
+          setConfirmBooking(false);
+          setStops((prev) =>
+            prev.map((stop, i) =>
+              i === index ? { ...stop, address, lat: '', lng: '', location: null } : stop,
+            ),
+          );
+        },
+        onSelect: (location: LocationChoice) => {
+          setQuote(null);
+          setConfirmBooking(false);
+          setStops((prev) =>
+            prev.map((stop, i) =>
+              i === index
+                ? {
+                    ...stop,
+                    address: location.address,
+                    lat: String(location.lat),
+                    lng: String(location.lng),
+                    location,
+                  }
+                : stop,
+            ),
+          );
+        },
+      })),
+    [],
+  );
   useEffect(() => {
     if (!quote) return;
     const timer = setTimeout(invalidateQuote, Math.max(0, quote.expires - Date.now()));
     return () => clearTimeout(timer);
   }, [quote]);
-  const money = (amount: number) =>
-    new Intl.NumberFormat(i18n.language.toLowerCase(), {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
-
-  const label = (key: string) => t(`ahamove.${key}`);
-  const endpoint = (id: string) => `${data.source.url}/${encodeURIComponent(id.trim())}`;
-  const run = async (action: () => Promise<void>, mutation = false, failure = 'failed') => {
-    setBusy(true);
-    setError('');
-    setNotice('');
-    try {
-      await action();
-    } catch (e: any) {
-      const status = e.response?.status;
-      setError(
-        status === 503
-          ? 'unconfigured'
-          : failure === 'quoteFailed' && status !== 403
-            ? failure
-            : status === 404
-              ? 'notFound'
-              : status === 406
-                ? 'cannotCancel'
-                : status === 403
-                  ? 'forbidden'
-                  : mutation && (!status || status >= 500)
-                    ? 'uncertain'
-                    : failure,
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-  const read = async (id: string) => {
-    const response = await axios.get(endpoint(id));
-    if (typeof response.data?._id !== 'string' || typeof response.data?.status !== 'string')
-      throw new Error('invalid_order');
-    setOrder(response.data);
-  };
+  const money = useCallback(
+    (amount: number) =>
+      new Intl.NumberFormat(i18n.language.toLowerCase(), {
+        style: 'currency',
+        currency: 'VND',
+      }).format(amount),
+    [i18n.language],
+  );
+  const label = useCallback((key: string) => t(`ahamove.${key}`), [t]);
+  const endpoint = useCallback(
+    (id: string) => `${data.source.url}/${encodeURIComponent(id.trim())}`,
+    [data.source.url],
+  );
+  const run = useCallback(
+    async (action: () => Promise<void>, mutation = false, failure = 'failed') => {
+      setBusy(true);
+      setError('');
+      setNotice('');
+      try {
+        await action();
+      } catch (e: any) {
+        const status = e.response?.status;
+        setError(
+          status === 503
+            ? 'unconfigured'
+            : failure === 'quoteFailed' && status !== 403
+              ? failure
+              : status === 404
+                ? 'notFound'
+                : status === 406
+                  ? 'cannotCancel'
+                  : status === 403
+                    ? 'forbidden'
+                    : mutation && (!status || status >= 500)
+                      ? 'uncertain'
+                      : failure,
+        );
+      } finally {
+        setBusy(false);
+      }
+    },
+    [],
+  );
+  const read = useCallback(
+    async (id: string) => {
+      const response = await axios.get(endpoint(id));
+      if (typeof response.data?._id !== 'string' || typeof response.data?.status !== 'string')
+        throw new Error('invalid_order');
+      setOrder(response.data);
+    },
+    [endpoint],
+  );
+  // Stable handlers for the memoised tracking panel.
+  const changeLookup = useCallback((next: string) => {
+    setLookup(next);
+    setOrder(null);
+  }, []);
+  const trackOrder = useCallback(() => {
+    setOrder(null);
+    void run(() => read(lookup));
+  }, [run, read, lookup]);
+  const openCancel = useCallback(() => setCancel(true), []);
+  const getSharedLink = useCallback(
+    (current: Order) =>
+      void run(async () => {
+        const response = await axios.get(`${endpoint(current._id)}/shared-link`);
+        const link = safeTrackingLink(response.data?.shared_link);
+        if (!link) throw new Error('invalid_link');
+        setOrder({ ...current, shared_link: link });
+      }),
+    [run, endpoint],
+  );
   const payload = {
     order_time: 0,
     path: stops.map((stop, index) => ({
@@ -220,180 +644,279 @@ export default function Ahamove({
       setNotice('created');
     }, true);
   };
-  const field = (index: number, key: 'name' | 'mobile') => (
-    <Input
-      key={key}
-      fullWidth
-      label={label(key)}
-      value={stops[index][key]}
-      required
-      type={key === 'mobile' ? 'tel' : 'text'}
-      slotProps={{
-        htmlInput: { pattern: key === 'mobile' ? '[+]?[0-9]{9,15}' : '.*\\S.*', maxLength: 500 },
-      }}
-      onChange={(e) =>
-        setStops(stops.map((stop, i) => (i === index ? { ...stop, [key]: e.target.value } : stop)))
-      }
-    />
+  const locked = busy || created;
+  const locationsUrl = useMemo(
+    () => data.source.url.replace(/\/orders$/, '/locations'),
+    [data.source.url],
   );
-  const sharedLink = safeTrackingLink(order?.shared_link);
+  // A section heading with a leading green accent bar. Kept to a single node
+  // because every element here is walked by the tests' accessibility queries.
+  const sectionHeading = (text: string) => (
+    <Typography
+      component="h2"
+      variant="subtitle1"
+      sx={{ fontWeight: 700, pl: 1.5, borderLeft: 3, borderColor: BRAND, lineHeight: 1.2 }}
+    >
+      {text}
+    </Typography>
+  );
+  // Service, payment and package sections don't depend on the route fields, so
+  // memoise them to skip re-rendering while addresses and contacts are typed.
+  const deliveryOptions = useMemo(
+    () => (
+      <>
+        <Divider />
+
+        {/* Service */}
+        <Stack spacing={1.5}>
+          {sectionHeading(label('serviceTitle'))}
+          <Input
+            required
+            label={label('service')}
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            helperText={label('serviceHelp')}
+            slotProps={{ htmlInput: { pattern: '[A-Z0-9\\-]+', maxLength: 80 } }}
+          />
+        </Stack>
+
+        <Divider />
+
+        {/* Payment */}
+        <Stack spacing={1.5}>
+          {sectionHeading(label('paymentTitle'))}
+          <Box
+            role="radiogroup"
+            aria-label={label('payment')}
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+              gap: 1.5,
+            }}
+          >
+            {payments.map((option) => (
+              <OptionCard
+                key={option}
+                title={label(option)}
+                value={option}
+                selected={payment === option}
+                disabled={locked}
+                onSelect={selectPayment}
+              />
+            ))}
+          </Box>
+        </Stack>
+
+        <Divider />
+
+        {/* Package */}
+        <Stack spacing={2}>
+          {sectionHeading(label('packageTitle'))}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: 2,
+            }}
+          >
+            {[
+              ['cod', cod, setCod],
+              ['itemValue', value, setValue],
+            ].map(([key, amount, setter]: any) => (
+              <Input
+                key={key}
+                label={label(key)}
+                required
+                type="number"
+                value={amount}
+                onChange={(e) => setter(e.target.value)}
+                slotProps={{ htmlInput: { min: 0, step: 1, max: 1000000000 } }}
+              />
+            ))}
+          </Box>
+          <Input
+            label={label('trackingNumber')}
+            value={tracking}
+            onChange={(e) => setTracking(e.target.value)}
+          />
+          <Input
+            label={label('remarks')}
+            multiline
+            rows={2}
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+          />
+        </Stack>
+      </>
+    ),
+    [service, payment, cod, value, tracking, remarks, locked, label, selectPayment],
+  );
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
-      <Stack spacing={1} sx={{ mb: 3 }}>
-        <Typography variant="overline" color="primary">
-          {label('eyebrow')}
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1240, mx: 'auto' }}>
+      {/* Brand hero band */}
+      <Paper
+        elevation={0}
+        sx={{
+          position: 'relative',
+          overflow: 'hidden',
+          borderRadius: 4,
+          p: { xs: 3, md: 4 },
+          mb: 3,
+          color: '#fff',
+          background: `linear-gradient(135deg, ${BRAND_DARK} 0%, ${BRAND} 100%)`,
+        }}
+      >
+        <Typography variant="overline" sx={{ opacity: 0.9, letterSpacing: 2 }}>
+          {label('brand')} · {label('heroPill')}
         </Typography>
-        <Typography variant="h4" component="h1">
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 800, color: '#fff' }}>
           {t(title)}
         </Typography>
-        {description && <Typography color="text.secondary">{t(description)}</Typography>}
-      </Stack>
+        {description && (
+          <Typography sx={{ mt: 0.5, maxWidth: 560, opacity: 0.92 }}>{t(description)}</Typography>
+        )}
+      </Paper>
+
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>
           {label(error)}
         </Alert>
       )}
       {notice && (
-        <Alert severity="success" sx={{ mb: 2 }}>
+        <Alert severity="success" sx={{ mb: 2, borderRadius: 3 }}>
           {label(notice)}
         </Alert>
       )}
-      {busy && <Typography role="status">{label('loading')}</Typography>}
+      {busy && (
+        <Box sx={{ mb: 2 }}>
+          <LinearProgress sx={{ borderRadius: 999 }} />
+          <Typography role="status" variant="caption" color="text.secondary">
+            {label('loading')}
+          </Typography>
+        </Box>
+      )}
+
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(0, 2fr)' },
-          gap: 3,
+          gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.55fr) minmax(0, 1fr)' },
+          gap: { xs: 2, md: 3 },
+          alignItems: 'start',
         }}
       >
+        {/* Booking */}
         <Paper
           variant="outlined"
-          sx={{ p: 3 }}
+          sx={{ p: { xs: 2, sm: 3 }, borderRadius: 4, boxShadow: 'none' }}
           component="form"
           onSubmit={estimate}
           onChange={invalidateQuote}
         >
-          <fieldset
-            disabled={busy || created}
-            style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
-          >
+          <fieldset disabled={locked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
             <Stack spacing={3}>
-              <Typography variant="h6">{label('create')}</Typography>
-              {stops.map((_, index) => (
-                <Stack key={index} spacing={2}>
-                  <Typography component="h2" variant="subtitle1">
-                    {label(index === 0 ? 'pickup' : 'dropoff')}
-                  </Typography>
-                  <AhamoveLocation
-                    url={data.source.url.replace(/\/orders$/, '/locations')}
-                    query={stops[index].address}
-                    selected={stops[index].location}
-                    disabled={busy || created}
-                    onQuery={(address) => {
-                      invalidateQuote();
-                      setStops(
-                        stops.map((stop, i) =>
-                          i === index
-                            ? { ...stop, address, lat: '', lng: '', location: null }
-                            : stop,
-                        ),
-                      );
-                    }}
-                    onSelect={(location) => {
-                      invalidateQuote();
-                      setStops(
-                        stops.map((stop, i) =>
-                          i === index
-                            ? {
-                                ...stop,
-                                address: location.address,
-                                lat: String(location.lat),
-                                lng: String(location.lng),
-                                location,
-                              }
-                            : stop,
-                        ),
-                      );
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                      gap: 2,
-                    }}
-                  >
-                    {(['name', 'mobile'] as const).map((key) => field(index, key))}
-                  </Box>
-                </Stack>
-              ))}
-              <Divider />
-              <Input
-                required
-                label={label('service')}
-                value={service}
-                onChange={(e) => setService(e.target.value)}
-                helperText={label('serviceHelp')}
-                slotProps={{ htmlInput: { pattern: '[A-Z0-9-]+', maxLength: 80 } }}
-              />
-              <Input
-                select
-                label={label('payment')}
-                value={payment}
-                onChange={(e) => setPayment(e.target.value)}
-              >
-                {['CASH', 'BALANCE', 'CASH_BY_RECIPIENT'].map((method) => (
-                  <MenuItem key={method} value={method}>
-                    {label(method)}
-                  </MenuItem>
-                ))}
-              </Input>
-              <Box
-                sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}
-              >
-                {[
-                  ['cod', cod, setCod],
-                  ['itemValue', value, setValue],
-                ].map(([key, amount, setter]: any) => (
-                  <Input
-                    key={key}
-                    label={label(key)}
-                    required
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setter(e.target.value)}
-                    slotProps={{ htmlInput: { min: 0, step: 1, max: 1000000000 } }}
-                  />
-                ))}
-              </Box>
-              <Input
-                label={label('trackingNumber')}
-                value={tracking}
-                onChange={(e) => setTracking(e.target.value)}
-              />
-              <Input
-                label={label('remarks')}
-                multiline
-                rows={2}
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-              />
-              <Typography variant="body2" color="text.secondary">
-                {label('createHint')}
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                {label('create')}
               </Typography>
-              <Button type="submit" variant="contained" size="large">
-                {label('getEstimate')}
-              </Button>
-              {quoteValid && (
-                <Stack spacing={1}>
-                  <Typography variant="subtitle1">{label('estimatedFee')}</Typography>
-                  <Typography variant="h4">{money(quote.amount)}</Typography>
-                  <Typography variant="body2">{label('quoteHint')}</Typography>
-                  <Button type="button" variant="contained" onClick={() => setConfirmBooking(true)}>
-                    {label('reviewBooking')}
-                  </Button>
+
+              {/* Route timeline */}
+              <Stack spacing={2.5}>
+                {sectionHeading(label('routeTitle'))}
+                {stops.map((stop, index) => (
+                  <StopFields
+                    key={index}
+                    index={index}
+                    stop={stop}
+                    url={locationsUrl}
+                    locked={locked}
+                    label={label}
+                    onQuery={locationHandlers[index].onQuery}
+                    onSelect={locationHandlers[index].onSelect}
+                    onContactChange={changeContact}
+                  />
+                ))}
+              </Stack>
+
+              {deliveryOptions}
+
+              {/* Fare + primary action */}
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  border: 2,
+                  borderColor: quoteValid ? BRAND : HAIRLINE,
+                  bgcolor: quoteValid ? BRAND_SOFT : 'transparent',
+                }}
+              >
+                <Stack spacing={1.5}>
+                  {quoteValid ? (
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      flexWrap="wrap"
+                      gap={1}
+                    >
+                      <Stack>
+                        <Typography variant="caption" color="text.secondary">
+                          {label('estimatedFee')}
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 800, color: BRAND_DARK }}>
+                          {money(quote.amount)}
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      {label('createHint')}
+                    </Typography>
+                  )}
+                  {quoteValid && (
+                    <Typography variant="caption" color="text.secondary">
+                      {label('quoteHint')}
+                    </Typography>
+                  )}
+                  {quoteValid ? (
+                    <Button
+                      type="button"
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      onClick={() => setConfirmBooking(true)}
+                      sx={{
+                        bgcolor: BRAND,
+                        borderColor: BRAND,
+                        color: '#fff',
+                        borderRadius: 3,
+                        '&:hover': { bgcolor: BRAND_DARK, borderColor: BRAND_DARK },
+                      }}
+                    >
+                      {label('reviewBooking')}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      sx={{
+                        bgcolor: BRAND,
+                        borderColor: BRAND,
+                        color: '#fff',
+                        borderRadius: 3,
+                        '&:hover': { bgcolor: BRAND_DARK, borderColor: BRAND_DARK },
+                        '&.Mui-disabled': {
+                          bgcolor: DISABLED_BG,
+                          borderColor: DISABLED_BG,
+                          color: DISABLED_TEXT,
+                        },
+                      }}
+                    >
+                      {label('getEstimate')}
+                    </Button>
+                  )}
                 </Stack>
-              )}
+              </Box>
             </Stack>
           </fieldset>
           {created && (
@@ -413,116 +936,21 @@ export default function Ahamove({
             </Button>
           )}
         </Paper>
-        <Stack spacing={3}>
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack
-              spacing={2}
-              component="form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setOrder(null);
-                void run(() => read(lookup));
-              }}
-            >
-              <Typography variant="h6">{label('track')}</Typography>
-              <Typography color="text.secondary" variant="body2">
-                {label('trackHint')}
-              </Typography>
-              <Input
-                label={label('orderId')}
-                required
-                disabled={busy}
-                value={lookup}
-                onChange={(e) => {
-                  setLookup(e.target.value);
-                  setOrder(null);
-                }}
-                slotProps={{ htmlInput: { pattern: '[A-Za-z0-9_-]{1,80}' } }}
-              />
-              <Button type="submit" variant="outlined" disabled={busy}>
-                {label('refresh')}
-              </Button>
-            </Stack>
-          </Paper>
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack spacing={2}>
-              {!order ? (
-                <Typography color="text.secondary">{label('empty')}</Typography>
-              ) : (
-                <>
-                  <Stack direction="row" justifyContent="space-between">
-                    <Typography variant="h6">{order._id}</Typography>
-                    <Chip
-                      label={label(
-                        statuses.includes(order.status)
-                          ? `statuses.${order.status}`
-                          : 'unknownStatus',
-                      )}
-                    />
-                  </Stack>
-                  {typeof order.total_pay === 'number' && (
-                    <Typography variant="h4">
-                      {new Intl.NumberFormat(i18n.language.toLowerCase(), {
-                        style: 'currency',
-                        currency: 'VND',
-                      }).format(order.total_pay)}
-                    </Typography>
-                  )}
-                  {order.path?.map((stop, index) => (
-                    <Box key={index}>
-                      <Typography variant="overline">
-                        {label(index === 0 ? 'pickup' : 'dropoff')}
-                      </Typography>
-                      <Typography>{stop.address}</Typography>
-                      <Typography color="text.secondary">
-                        {stop.name} · {stop.mobile}
-                      </Typography>
-                    </Box>
-                  ))}
-                  {order.supplier_name && (
-                    <Typography>{t('ahamove.driver', { name: order.supplier_name })}</Typography>
-                  )}
-                  {sharedLink ? (
-                    <Button
-                      component="a"
-                      href={sharedLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {label('journey')}
-                    </Button>
-                  ) : (
-                    <Button
-                      disabled={busy}
-                      onClick={() =>
-                        void run(async () => {
-                          const response = await axios.get(`${endpoint(order._id)}/shared-link`);
-                          const link = safeTrackingLink(response.data?.shared_link);
-                          if (!link) throw new Error('invalid_link');
-                          setOrder({ ...order, shared_link: link });
-                        })
-                      }
-                    >
-                      {label('getLink')}
-                    </Button>
-                  )}
-                  <Divider />
-                  <Button
-                    color="error"
-                    disabled={busy || !cancellable.includes(order.status)}
-                    onClick={() => setCancel(true)}
-                  >
-                    {label('cancel')}
-                  </Button>
-                  <Typography variant="caption" color="text.secondary">
-                    {label('cancelHint')}
-                  </Typography>
-                </>
-              )}
-            </Stack>
-          </Paper>
-        </Stack>
+
+        <TrackPanel
+          lookup={lookup}
+          order={order}
+          busy={busy}
+          label={label}
+          money={money}
+          t={t}
+          onLookupChange={changeLookup}
+          onTrack={trackOrder}
+          onGetLink={getSharedLink}
+          onOpenCancel={openCancel}
+        />
       </Box>
+
       <Dialog
         open={confirmBooking && !!quoteValid}
         onClose={() => {
@@ -534,20 +962,37 @@ export default function Ahamove({
       >
         <DialogTitle id="ahamove-booking-title">{label('reviewBooking')}</DialogTitle>
         <DialogContent>
-          <Stack spacing={2}>
-            <Typography>{label('estimatedFee')}</Typography>
-            <Typography variant="h4">{quote && money(quote.amount)}</Typography>
-            <Typography>{label('quoteHint')}</Typography>
+          <Stack spacing={1.5} sx={{ pt: 1 }}>
+            <Box sx={{ p: 2, borderRadius: 3, bgcolor: BRAND_SOFT }}>
+              <Typography variant="caption" color="text.secondary">
+                {label('estimatedFee')}
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: BRAND_DARK }}>
+                {quote && money(quote.amount)}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              {label('quoteHint')}
+            </Typography>
             {stops.map((stop, index) => (
-              <Box key={index}>
-                <Typography variant="subtitle2">
+              <Typography
+                key={index}
+                sx={{
+                  pl: 1.5,
+                  borderLeft: 6,
+                  borderColor: index === 0 ? BRAND : 'text.primary',
+                }}
+              >
+                <Typography component="span" variant="caption" color="text.secondary" display="block">
                   {label(index === 0 ? 'pickup' : 'dropoff')}
                 </Typography>
-                <Typography>{stop.address}</Typography>
-              </Box>
+                {stop.address}
+              </Typography>
             ))}
-            <Typography>{service}</Typography>
-            <Typography>{label(payment)}</Typography>
+            <Divider />
+            <Typography color="text.secondary" variant="body2">
+              {label('serviceTitle')}: {service} · {label(payment)}
+            </Typography>
             <Typography>{t('ahamove.codSummary', { amount: money(Number(cod)) })}</Typography>
           </Stack>
         </DialogContent>
@@ -555,7 +1000,22 @@ export default function Ahamove({
           <Button disabled={busy} onClick={() => setConfirmBooking(false)}>
             {label('backToDetails')}
           </Button>
-          <Button variant="contained" disabled={busy || !quoteValid} onClick={book}>
+          <Button
+            variant="contained"
+            disabled={busy || !quoteValid}
+            onClick={book}
+            sx={{
+              bgcolor: BRAND,
+              borderColor: BRAND,
+              color: '#fff',
+              '&:hover': { bgcolor: BRAND_DARK, borderColor: BRAND_DARK },
+              '&.Mui-disabled': {
+                bgcolor: DISABLED_BG,
+                borderColor: DISABLED_BG,
+                color: DISABLED_TEXT,
+              },
+            }}
+          >
             {label('confirmBooking')}
           </Button>
         </DialogActions>
@@ -590,6 +1050,7 @@ export default function Ahamove({
           </Button>
           <Button
             color="error"
+            variant="contained"
             disabled={busy || !comment.trim()}
             onClick={() =>
               void run(async () => {

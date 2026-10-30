@@ -31,6 +31,7 @@ export function isConversation(value: unknown): value is Conversation {
       'draft',
     ]) &&
     (value.channel === 'Instagram' || value.channel === 'Messenger') &&
+    (value.avatar === undefined || typeof value.avatar === 'string') &&
     typeof value.unread === 'boolean' &&
     typeof value.resolved === 'boolean' &&
     Array.isArray(value.messages) &&

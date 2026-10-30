@@ -1,12 +1,27 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Alert, Button, Link, Stack, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import SearchRounded from '@mui/icons-material/SearchRounded';
 import type { TextFieldProps } from '@mui/material/TextField';
 import { useTranslation } from 'react-i18next';
 
 const Input = TextField as unknown as React.ComponentType<
   Omit<TextFieldProps<'outlined'>, 'variant'>
 >;
+// Static Ahamove-style accents keep the frequently re-rendered picker cheap.
+const BRAND = '#00B14F';
+const BRAND_SOFT = 'rgba(0,177,79,0.08)';
+const BRAND_HOVER = 'rgba(0,177,79,0.1)';
+const BRAND_BORDER = 'rgba(0,177,79,0.45)';
 export type LocationChoice = {
   id: string;
   address: string;
@@ -32,7 +47,7 @@ export function isLocation(value: any): value is LocationChoice {
   );
 }
 
-export default function AhamoveLocation({
+function AhamoveLocation({
   url,
   query,
   selected,
@@ -97,17 +112,17 @@ export default function AhamoveLocation({
   };
   const attribution = (choice: LocationChoice) =>
     choice.attributions?.map((source, i) => (
-      <Typography variant="caption" key={i}>
+      <Typography variant="caption" color="text.secondary" key={i}>
         {source.provider}
         {source.providerUri?.startsWith('https://') && (
-          <Link href={source.providerUri} target="_blank" rel="noopener noreferrer">
+          <Link href={source.providerUri} target="_blank" rel="noopener noreferrer" sx={{ ml: 0.5 }}>
             {t('ahamove.source')}
           </Link>
         )}
       </Typography>
     ));
   return (
-    <Stack spacing={1}>
+    <Stack spacing={1.5}>
       <Input
         fullWidth
         required
@@ -130,22 +145,42 @@ export default function AhamoveLocation({
       <Button
         type="button"
         variant="outlined"
+        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <SearchRounded />}
         disabled={disabled || loading || query.trim().length < 3}
         onClick={() => void search()}
+        sx={{ alignSelf: 'flex-start' }}
       >
         {t('ahamove.searchLocation')}
       </Button>
-      {loading && <Typography role="status">{t('ahamove.searchingLocation')}</Typography>}
+      {loading && (
+        <Typography role="status" variant="body2" color="text.secondary">
+          {t('ahamove.searchingLocation')}
+        </Typography>
+      )}
       {error && <Alert severity="error">{t(`ahamove.${error}`)}</Alert>}
       {searched && items.length === 0 && (
-        <Typography role="status">{t('ahamove.noLocations')}</Typography>
+        <Typography role="status" variant="body2" color="text.secondary">
+          {t('ahamove.noLocations')}
+        </Typography>
       )}
       {items.map((choice) => (
-        <Stack key={choice.id}>
+        <Stack key={choice.id} spacing={0.25}>
           <Button
             type="button"
+            fullWidth
             disabled={disabled}
-            sx={{ justifyContent: 'flex-start', textAlign: 'left' }}
+            sx={{
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+              textTransform: 'none',
+              letterSpacing: 'normal',
+              color: 'text.primary',
+              borderColor: 'divider',
+              borderRadius: 2,
+              px: 2,
+              py: 1.25,
+              '&:hover,&:focus': { borderColor: BRAND, backgroundColor: BRAND_HOVER },
+            }}
             onClick={() => {
               reset();
               onSelect(choice);
@@ -157,10 +192,16 @@ export default function AhamoveLocation({
         </Stack>
       ))}
       {selected && (
-        <Alert severity="success">
-          <Typography>{t('ahamove.locationSelected')}</Typography>
-          <Typography>{selected.address}</Typography>
-          <Typography variant="caption">
+        <Alert
+          severity="success"
+          icon={<CheckCircleRounded fontSize="inherit" />}
+          sx={{ borderRadius: 2, borderColor: BRAND_BORDER, bgcolor: BRAND_SOFT }}
+        >
+          <Typography variant="subtitle2" sx={{ color: BRAND, fontWeight: 700 }}>
+            {t('ahamove.locationSelected')}
+          </Typography>
+          <Typography sx={{ color: 'text.primary' }}>{selected.address}</Typography>
+          <Typography variant="caption" color="text.secondary">
             {t('ahamove.coordinates', {
               latitude: new Intl.NumberFormat(i18n.language.toLowerCase(), {
                 maximumFractionDigits: 7,
@@ -192,3 +233,5 @@ export default function AhamoveLocation({
     </Stack>
   );
 }
+
+export default React.memo(AhamoveLocation);

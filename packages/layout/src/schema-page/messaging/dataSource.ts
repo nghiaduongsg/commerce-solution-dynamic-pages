@@ -77,10 +77,15 @@ export async function readConversations(
           !['messenger', 'instagram'].includes(c.channel)
         )
           throw new Error('invalid_page');
+        const avatar =
+          typeof c.customer_avatar === 'string' && c.customer_avatar.startsWith('https://')
+            ? c.customer_avatar
+            : undefined;
         return {
           id: c.id,
           name: c.customer_name || c.customer_external_id,
           handle: c.customer_external_id,
+          ...(avatar ? { avatar } : {}),
           initials: (c.customer_name || c.customer_external_id)
             .split(/\s+/)
             .filter(Boolean)
