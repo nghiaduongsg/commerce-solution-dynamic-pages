@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import DynamicForm from '@pkg-form/components/DynamicForm/DynamicForm';
 import { FormWidgetProps } from '@pkg-form/types';
@@ -30,17 +31,19 @@ const constructSchemas = (namespace: string, data: AnyType) => {
 };
 
 const DynamicSchemaWidget = ({ id, options, formContext }: FormWidgetProps) => {
+  const { t: localizeUi } = useTranslation('common');
+
   const { dataFrom } = options;
 
   const data = useApiData(id, dataFrom);
   const { loading, hasError } = useApiDataState(id);
 
   if (loading) {
-    return <div>Data Loading ...</div>;
+    return <div>{localizeUi('ui.loadingData')}</div>;
   }
 
   if (hasError) {
-    return <div>Failed to load data ...</div>;
+    return <div>{localizeUi('ui.loadFailed')}</div>;
   }
 
   const { schema, uiSchema } = constructSchemas(formContext?.namespace, data);

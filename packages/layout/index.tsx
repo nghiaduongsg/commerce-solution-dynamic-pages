@@ -9,3 +9,8 @@ export { default as PageContainer } from './src/common/PageContainer';
 export { default as usePageLayout } from './src/common/hooks/usePageLayout';
 export { default as usePageAnnounce } from './src/common/hooks/usePageAnnounce';
 export { registerIconResolver } from './src/common/utils';
+
+export { default as SchemaPage } from './src/schema-page/SchemaPage';
+export type { SchemaPageProps } from './src/schema-page/SchemaPage';
+
+export { WORKSPACE_TRANSLATIONS } from './src/schema-page/translations';

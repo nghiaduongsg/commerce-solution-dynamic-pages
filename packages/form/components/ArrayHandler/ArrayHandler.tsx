@@ -716,7 +716,11 @@ const GroupedTableData = ({ parentId, id, configuration, isDisabled, changeIndic
   }, [translate, id, namespace, selectedLanguage]);
 
   if (!configuration) {
-    return <Box mb={2}>Configuration not found for {id}</Box>;
+    return (
+      <Box mb={2}>
+        {translate('ui.configurationNotFound', { ns: COMMON, lng: selectedLanguage, id })}
+      </Box>
+    );
   }
 
   return (

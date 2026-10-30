@@ -248,6 +248,8 @@ const issButtons = {
 };
 
 const Notifications = () => {
+  const { t: localizeUi } = useTranslation('common');
+
   const theme = useTheme();
   const styles = useStyles(theme);
   const { selectedLanguage, application, apiUrl } = useSystem();
@@ -412,7 +414,9 @@ const Notifications = () => {
               <Typography
                 sx={event.status === 'Unread' ? styles.typographyUnread : styles.typographyRead}
               >
-                {event.entityCLDescription === 'Contact' ? 'Letter' : event.entityCLDescription}
+                {event.entityCLDescription === 'Contact'
+                  ? localizeUi('ui.letter')
+                  : event.entityCLDescription}
               </Typography>
               <AppActions
                 page={{ id: event.notificationId }}

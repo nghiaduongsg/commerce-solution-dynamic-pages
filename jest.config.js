@@ -40,8 +40,8 @@ module.exports = {
 
   moduleNameMapper: {
     '@pkg-entity/utils/comparisonUtils': '<rootDir>/packages/__mocks__/comparisonUtils.ts',
-    'react-i18next': '<rootDir>/packages/__mocks__/react-i18next.ts',
-    i18next: '<rootDir>/packages/__mocks__/i18next.ts',
+    '^react-i18next$': '<rootDir>/packages/__mocks__/react-i18next.ts',
+    '^i18next$': '<rootDir>/packages/__mocks__/i18next.ts',
     '@pkg-setup/store': '<rootDir>/packages/__mocks__/setup-store.ts',
     'react-use': '<rootDir>/packages/__mocks__/react-use.ts',
     'lodash/debounce': '<rootDir>/packages/__mocks__/lodash-debounce.ts',

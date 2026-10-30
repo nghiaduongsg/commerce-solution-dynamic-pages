@@ -1,0 +1,24 @@
+{
+  "ui": {
+    "application": "Ứng dụng",
+    "accessibilityStatement": "Tuyên bố về khả năng tiếp cận",
+    "accessibilityFeedback": "Phản hồi về khả năng tiếp cận",
+    "configurationNotFound": "Không tìm thấy cấu hình cho {{id}}",
+    "deprecated": "Đã lỗi thời:",
+    "loadingData": "Đang tải dữ liệu…",
+    "loadFailed": "Không thể tải dữ liệu.",
+    "fileSize": "{{size}} KB",
+    "attachmentReference": "Tham chiếu tệp đính kèm",
+    "label": "Nhãn",
+    "excluded": "Đã loại trừ",
+    "percentage": "Tỷ lệ phần trăm",
+    "maxAmount": "Số tiền tối đa",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "noSchema": "Chưa cung cấp mã lược đồ",
+    "errorImage": "Mô tả lỗi",
+    "avatar": "Ảnh đại diện",
+    "filterCategories": "Lọc danh mục",
+    "letter": "Thư"
+  }
+}

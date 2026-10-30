@@ -33,6 +33,8 @@ function replaceInitialHelpUrl(initialUrl: string) {
 const PRODUCT_VERSION = 'ProductVersion';
 
 const Profile: React.FC<ProfileProps> = ({ customActions = [], userAccountUrl }) => {
+  const { t: localizeUi } = useTranslation('common');
+
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { selectedLanguage, application } = useSystem();
@@ -133,7 +135,7 @@ const Profile: React.FC<ProfileProps> = ({ customActions = [], userAccountUrl })
       <PopoverMenu
         id={`profile-menu-options`}
         dataTestId={`profile-menu-${application}`}
-        icon={<Avatar alt="Avatar" src={profileImage || avatarUrl} />}
+        icon={<Avatar alt={localizeUi('ui.avatar')} src={profileImage || avatarUrl} />}
         actions={defaultActions as any}
         label={translate('profile', { ns: COMMON, lng: selectedLanguage })}
         onOpen={() => setMenuOpen(true)}

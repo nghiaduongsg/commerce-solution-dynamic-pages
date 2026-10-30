@@ -141,7 +141,7 @@ const TranslationsController = ({
         ns: ACCESSIBILITY,
         lng: selectedLanguage,
         code: idKey,
-      }) || 'Revenue Management'
+      }) || translate('ui.application', { ns: 'common', lng: selectedLanguage })
     ).replace(/"/g, '');
   }, [pageId, idKey, selectedLanguage, translationsLoaded, translate, location.pathname]);
 

@@ -2,6 +2,12 @@
 
 Reusable schema-driven React pages, forms, layouts, authentication and themes.
 
+## Required architecture
+
+Read [AGENTS.md](AGENTS.md) and [Schema-driven pages](docs/schema-driven-pages.md) before changing frontend pages. Consuming commerce-ui pages contain JSON declarations only; all page component implementations, styles, state, and behavior tests belong in this library (icarus-dynamic-pages).
+
+The public layout entry exports `SchemaPage` for standalone JSON-defined inbox and dashboard workspaces. Existing CRUD schemas continue to use `DynamicPage`.
+
 ## Generic API migration
 
 - Use AppProvider from core.initialization, AuthProvider from setup, DynamicThemeProvider from theme, and DynamicPage from layout.

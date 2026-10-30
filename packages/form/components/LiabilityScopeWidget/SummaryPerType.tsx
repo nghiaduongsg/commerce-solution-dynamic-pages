@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useMemo } from 'react';
 
 import {
@@ -46,6 +47,8 @@ const SummaryPerType = ({
     isByPeriod: boolean;
   };
 }) => {
+  const { t: localizeUi } = useTranslation('common');
+
   const styles = getStyles(useTheme());
 
   const list = useMemo(() => {
@@ -75,10 +78,10 @@ const SummaryPerType = ({
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell align="left">Label</TableCell>
-                    <TableCell align="left">Excluded</TableCell>
-                    <TableCell align="right">Percentage</TableCell>
-                    <TableCell align="right">Max. Amount</TableCell>
+                    <TableCell align="left">{localizeUi('ui.label')}</TableCell>
+                    <TableCell align="left">{localizeUi('ui.excluded')}</TableCell>
+                    <TableCell align="right">{localizeUi('ui.percentage')}</TableCell>
+                    <TableCell align="right">{localizeUi('ui.maxAmount')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -110,10 +113,10 @@ const SummaryPerType = ({
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell align="left">Start Date</TableCell>
-                    <TableCell align="left">End Date</TableCell>
-                    <TableCell align="right">Percentage</TableCell>
-                    <TableCell align="right">Max Amount</TableCell>
+                    <TableCell align="left">{localizeUi('ui.startDate')}</TableCell>
+                    <TableCell align="left">{localizeUi('ui.endDate')}</TableCell>
+                    <TableCell align="right">{localizeUi('ui.percentage')}</TableCell>
+                    <TableCell align="right">{localizeUi('ui.maxAmount')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>

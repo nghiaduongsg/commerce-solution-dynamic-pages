@@ -45,6 +45,8 @@ const FormGroup = ({
   level: number;
   totalGroups: number;
 }) => {
+  const { t: localizeUi } = useTranslation('common');
+
   const { formId } = formContext ?? {};
   const { setManyFieldsVisibility } = useFormManagerContext();
   const { removeMultipleFieldErrors } = useValidationsContext();
@@ -95,7 +97,7 @@ const FormGroup = ({
     case 'StackedAccordions':
       return (
         <FormGroupContainer visible={visible} totalGroups={totalGroups} columns={columns}>
-          <Stack spacing={1.5} role="list" aria-label="Filter categories">
+          <Stack spacing={1.5} role="list" aria-label={localizeUi('ui.filterCategories')}>
             <FormAccordionProvider>
               {group?.groups?.map((acc, index) => {
                 const accLabel = translate(acc.key, { ns: namespace, lng: selectedLanguage });

@@ -1,3 +1,4 @@
+import { formatUiNumber } from '@pkg-common/locales';
 import React, { useState, useEffect } from 'react';
 import Axios from 'axios-observable';
 import { FileUploadWidgetProps } from './FileWidget.d';
@@ -59,6 +60,8 @@ const CommonFileUploadWidget = ({
   onStatusChanged,
   onServerError,
 }: FileUploadWidgetProps) => {
+  const { t: localizeUi, i18n: uiI18n } = useTranslation('common');
+
   const styles = getStyles(useTheme());
   const [progress, setProgress] = useState(0);
 
@@ -155,8 +158,12 @@ const CommonFileUploadWidget = ({
                     {fileUsed && (
                       <>
                         <Typography variant="caption" sx={styles.disabled}>
-                          {(fileUsed['size'] / 1024).toFixed(2)}
-                          {' KB'}
+                          {localizeUi('ui.fileSize', {
+                            size: formatUiNumber(
+                              fileUsed['size'] / 1024,
+                              uiI18n.resolvedLanguage || uiI18n.language,
+                            ),
+                          })}
                         </Typography>
                       </>
                     )}

@@ -1,3 +1,4 @@
+import { formatUiNumber } from '@pkg-common/locales';
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Box, Grid, LinearProgress, Typography } from '@mui/material';
@@ -78,6 +79,8 @@ const AttachmentsUploader: React.FC<AttachmentsUploaderProps> = ({
   onUploadSuccess,
   onCancel,
 }) => {
+  const { t: localizeUi, i18n: uiI18n } = useTranslation('common');
+
   const [category, setCategory] = useState<{ code: string; label: string }>();
   const [comment, setComment] = useState('');
   const [policyApplied, setPolicyApplied] = useState('');
@@ -1191,7 +1194,7 @@ const AttachmentsUploader: React.FC<AttachmentsUploaderProps> = ({
                 }
               }}
               formContext={formContext as any}
-              label="Attachment Reference"
+              label={localizeUi('ui.attachmentReference')}
               serverErrors={[]}
               serverErrorTypes={[]}
               diffs={[]}
@@ -1430,7 +1433,13 @@ const AttachmentsUploader: React.FC<AttachmentsUploaderProps> = ({
                   data-testid={`${id}-file-input`}
                 >
                   <Typography variant="body2">
-                    {uploadedFile.name} - {(uploadedFile.size / 1024).toFixed(2)} KB
+                    {uploadedFile.name} -{' '}
+                    {localizeUi('ui.fileSize', {
+                      size: formatUiNumber(
+                        uploadedFile.size / 1024,
+                        uiI18n.resolvedLanguage || uiI18n.language,
+                      ),
+                    })}
                   </Typography>
                 </Box>
                 {dssValidation && (

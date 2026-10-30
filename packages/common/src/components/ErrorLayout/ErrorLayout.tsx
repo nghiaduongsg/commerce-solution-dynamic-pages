@@ -30,6 +30,8 @@ const getStyles = (theme: Theme): Record<string, AnyType> => ({
 });
 
 const ErrorLayout = ({ image, message }) => {
+  const { t: localizeUi } = useTranslation('common');
+
   const theme: Theme = useTheme();
   const styles = getStyles(theme);
   const { selectedLanguage } = useSystem();
@@ -39,7 +41,7 @@ const ErrorLayout = ({ image, message }) => {
   return (
     <Box sx={styles?.container}>
       <div style={styles?.innerContainer}>
-        <img src={image} alt="error description" style={styles?.image} />
+        <img src={image} alt={localizeUi('ui.errorImage')} style={styles?.image} />
         <Box sx={styles?.messageContainer}>
           <TranslationsElementController namespace={COMMON}>
             <Typography variant="body1">{translatedMessage}</Typography>

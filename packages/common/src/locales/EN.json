@@ -1,0 +1,24 @@
+{
+  "ui": {
+    "application": "Application",
+    "accessibilityStatement": "Accessibility statement",
+    "accessibilityFeedback": "Accessibility feedback",
+    "configurationNotFound": "Configuration not found for {{id}}",
+    "deprecated": "Deprecated:",
+    "loadingData": "Loading data…",
+    "loadFailed": "Failed to load data.",
+    "fileSize": "{{size}} KB",
+    "attachmentReference": "Attachment reference",
+    "label": "Label",
+    "excluded": "Excluded",
+    "percentage": "Percentage",
+    "maxAmount": "Maximum amount",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "noSchema": "No schema code provided",
+    "errorImage": "Error description",
+    "avatar": "Avatar",
+    "filterCategories": "Filter categories",
+    "letter": "Letter"
+  }
+}

@@ -1,3 +1,4 @@
+import { formatUiNumber } from '@pkg-common/locales';
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { GenericFileWidgetProps } from './FileWidget.d';
@@ -105,6 +106,8 @@ const downloadFile = (file, apiUrl) => {
 };
 
 const FileWidget = ({ id, options, readonly, disabled }: GenericFileWidgetProps) => {
+  const { t: localizeUi, i18n: uiI18n } = useTranslation('common');
+
   const styles = getStyles(useTheme());
 
   const { value = {}, clearFormValues } = useFormField(id);
@@ -268,7 +271,12 @@ const FileWidget = ({ id, options, readonly, disabled }: GenericFileWidgetProps)
                         </Grid>
                         <Grid size={{ xs: 'auto' }} sx={styles.fileSize}>
                           <Typography variant="caption" sx={styles.disabled}>
-                            {(fileToShow['size'] / 1024).toFixed(2)} KB
+                            {localizeUi('ui.fileSize', {
+                              size: formatUiNumber(
+                                fileToShow['size'] / 1024,
+                                uiI18n.resolvedLanguage || uiI18n.language,
+                              ),
+                            })}
                           </Typography>
                         </Grid>
                       </Grid>

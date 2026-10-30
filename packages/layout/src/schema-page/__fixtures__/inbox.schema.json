@@ -1,0 +1,144 @@
+{
+  "title": "workspaceTest:inbox.title",
+  "description": "workspaceTest:inbox.description",
+  "type": "object",
+  "properties": {
+    "workspace": {
+      "type": "string"
+    },
+    "conversations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "required": ["workspace", "conversations"],
+  "default": {
+    "workspace": "Acme Studio",
+    "conversations": [
+      {
+        "id": "mia",
+        "name": "Mia Chen",
+        "initials": "MC",
+        "color": "#e7d9cd",
+        "channel": "Instagram",
+        "handle": "@mia.chen",
+        "topic": "workspace:topics.product",
+        "unread": true,
+        "resolved": false,
+        "intent": "workspace:intents.product",
+        "summary": "Mia is interested in the Everyday Tote in olive and would like to know whether it is available and when it could arrive.",
+        "draft": "Hi Mia! Thanks for your interest in the Everyday Tote. Let me check availability in olive for you. Which city would we be shipping to? That will help me confirm the delivery estimate, too.",
+        "messages": [
+          {
+            "id": "m1",
+            "direction": "in",
+            "text": "Hi there! I spotted your Everyday Tote on my feed and I’m a little obsessed 🌿",
+            "time": "2026-10-30T10:24:00+07:00"
+          },
+          {
+            "id": "m2",
+            "direction": "out",
+            "text": "Hi Mia! So glad it caught your eye. What would you like to know about it?",
+            "time": "2026-10-30T10:25:00+07:00"
+          },
+          {
+            "id": "m3",
+            "direction": "in",
+            "text": "Do you have it in olive? And could it arrive before the weekend? I’m planning a little getaway.",
+            "time": "2026-10-30T10:26:00+07:00"
+          }
+        ]
+      },
+      {
+        "id": "james",
+        "name": "James Wilson",
+        "initials": "JW",
+        "color": "#dce7f0",
+        "channel": "Messenger",
+        "handle": "James Wilson",
+        "topic": "workspace:topics.order",
+        "unread": true,
+        "resolved": false,
+        "intent": "workspace:intents.order",
+        "summary": "James is asking for an update on order #1042. Confirm his order details before sharing any shipping information.",
+        "draft": "Hi James! I can help you check on order #1042. Could you confirm the email address used at checkout so I can locate the right order?",
+        "messages": [
+          {
+            "id": "j1",
+            "direction": "in",
+            "text": "Hey! Any update on order #1042? I placed it on Tuesday. Thanks!",
+            "time": "2026-10-30T10:18:00+07:00"
+          }
+        ]
+      },
+      {
+        "id": "sofia",
+        "name": "Sofia Martinez",
+        "initials": "SM",
+        "color": "#eadff1",
+        "channel": "Instagram",
+        "handle": "@sofia.m",
+        "topic": "workspace:topics.sizing",
+        "unread": false,
+        "resolved": false,
+        "intent": "workspace:intents.sizing",
+        "summary": "Sofia is choosing between two sizes. Ask which product she is considering before offering sizing advice.",
+        "draft": "Hi Sofia! Happy to help you find the right fit. Which item are you looking at, and which two sizes are you considering?",
+        "messages": [
+          {
+            "id": "s1",
+            "direction": "in",
+            "text": "I’m between sizes. Could you help me pick the right fit?",
+            "time": "2026-10-30T09:54:00+07:00"
+          }
+        ]
+      },
+      {
+        "id": "oliver",
+        "name": "Oliver Park",
+        "initials": "OP",
+        "color": "#dbe6db",
+        "channel": "Messenger",
+        "handle": "Oliver Park",
+        "topic": "workspace:topics.returns",
+        "unread": false,
+        "resolved": false,
+        "intent": "workspace:intents.returns",
+        "summary": "Oliver would like to return a recent purchase. Request the order number and check the store’s return policy.",
+        "draft": "Hi Oliver, I can help with your return. Could you share your order number and which item you’d like to return?",
+        "messages": [
+          {
+            "id": "o1",
+            "direction": "in",
+            "text": "Hi, how can I return something from my last order?",
+            "time": "2026-10-30T09:32:00+07:00"
+          }
+        ]
+      },
+      {
+        "id": "ava",
+        "name": "Ava Thompson",
+        "initials": "AT",
+        "color": "#f2e6c9",
+        "channel": "Instagram",
+        "handle": "@ava.thompson",
+        "topic": "workspace:topics.feedback",
+        "unread": false,
+        "resolved": true,
+        "intent": "workspace:intents.feedback",
+        "summary": "Ava received her order and shared positive feedback. This conversation has been resolved.",
+        "draft": "That makes our day, Ava! Thanks for taking the time to let us know. Enjoy your new bag 💚",
+        "messages": [
+          {
+            "id": "a1",
+            "direction": "in",
+            "text": "It just arrived and it’s even better in person. Thank you so much!",
+            "time": "workspace:yesterday"
+          }
+        ]
+      }
+    ]
+  }
+}

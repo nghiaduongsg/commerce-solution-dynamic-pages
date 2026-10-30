@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useMemo } from 'react';
 import { useLocation, useParams } from 'react-router';
 import { Box, Typography } from '@mui/material';
@@ -33,6 +34,8 @@ const DynamicPage = ({
     backButtonSx?: SxProps;
   };
 }) => {
+  const { t: localizeUi } = useTranslation('common');
+
   const routeParams = useParams<{ category?: string; idKey?: string }>();
   const location = useLocation();
 
@@ -61,7 +64,7 @@ const DynamicPage = ({
   }, [location]);
 
   if (!pageId) {
-    return <Typography>No schema code provided</Typography>;
+    return <Typography>{localizeUi('ui.noSchema')}</Typography>;
   }
 
   if (isList) {
