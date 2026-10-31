@@ -230,5 +230,13 @@
     "backToDetails": "Back to details",
     "codSummary": "Cash to collect: {{amount}}",
     "quoteFailed": "Unable to price this delivery. Check the locations, service and collection amount, then try again."
-  }
+  },
+  "facebookLogin": "Connect with Facebook",
+  "facebookLoginHelp": "Sign in to Facebook, grant access to your business Pages, then choose a Page for this store. The connection is saved securely for future sessions.",
+  "facebookChoosePage": "Facebook Page",
+  "facebookNotConfigured": "Facebook login is not configured. Contact your administrator.",
+  "facebookLoginFailed": "Unable to connect to Facebook. Check Page permissions and try again.",
+  "facebookLoginCancelled": "Facebook login was cancelled. You can try again when ready.",
+  "facebookNoPages": "No eligible Pages found. Grant access to a Page you can manage messages for.",
+  "manualConnection": "Enter access token manually"
 }

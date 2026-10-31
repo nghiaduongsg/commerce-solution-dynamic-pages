@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { InboxData } from './schemas/model';
 import { useInboxData } from './messaging/useInboxData';
 import { useInboxActions } from './messaging/useInboxActions';
+import { useInboxStream } from './messaging/useInboxStream';
 import ConversationList from './messaging/ConversationList';
 import { Avatar, ChannelIcon } from './messaging/primitives';
 import './inbox.css';
@@ -36,6 +37,14 @@ export default function Inbox({
   const readOnly = !actions.canReply;
   const live = actions.live;
   const workspace = actions.connection?.page_name || data.workspace;
+  // Real-time updates: refresh immediately when the backend streams a change,
+  // instead of waiting for the periodic poll. Only runs for a live, connected
+  // inbox; it reconnects with backoff and falls back to the poll if unavailable.
+  useInboxStream({
+    enabled: live && !!actions.connection && !!data.source?.url,
+    baseUrl: data.source?.url || '',
+    onRefresh: inbox.refresh,
+  });
   const [desktop, setDesktop] = useState(
     () => window.matchMedia?.('(min-width: 1200px)').matches || false,
   );
@@ -185,6 +194,7 @@ export default function Inbox({
       {settingsOpen && (
         <Suspense fallback={<div role="status">{t('loadingWorkspace')}</div>}>
           <ConnectionSettings
+            baseUrl={data.source?.url}
             pageId={actions.connection?.page_id}
             busy={!!actions.busy}
             onClose={() => setSettingsOpen(false)}

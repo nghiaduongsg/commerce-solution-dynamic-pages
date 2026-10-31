@@ -230,5 +230,13 @@
     "backToDetails": "Quay lại thông tin",
     "codSummary": "Tiền thu hộ: {{amount}}",
     "quoteFailed": "Không thể tính phí đơn này. Kiểm tra địa điểm, dịch vụ và tiền thu hộ rồi thử lại."
-  }
+  },
+  "facebookLogin": "Kết nối với Facebook",
+  "facebookLoginHelp": "Đăng nhập Facebook, cấp quyền truy cập các Trang doanh nghiệp, rồi chọn Trang cho cửa hàng. Kết nối được lưu bảo mật để sử dụng trong các phiên sau.",
+  "facebookChoosePage": "Trang Facebook",
+  "facebookNotConfigured": "Chưa cấu hình đăng nhập Facebook. Vui lòng liên hệ quản trị viên.",
+  "facebookLoginFailed": "Không thể kết nối Facebook. Vui lòng kiểm tra quyền truy cập Trang và thử lại.",
+  "facebookLoginCancelled": "Đã hủy đăng nhập Facebook. Bạn có thể thử lại khi sẵn sàng.",
+  "facebookNoPages": "Không tìm thấy Trang phù hợp. Vui lòng cấp quyền cho Trang mà bạn có thể quản lý tin nhắn.",
+  "manualConnection": "Nhập mã truy cập thủ công"
 }
