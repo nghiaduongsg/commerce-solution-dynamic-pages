@@ -20,5 +20,11 @@
     "avatar": "Avatar",
     "filterCategories": "Filter categories",
     "letter": "Letter"
+  },
+  "detailTable": {
+    "empty": "No items to display.",
+    "viewDetails": "View details for {{name}}",
+    "close": "Close",
+    "tableLabel": "Details table"
   }
 }

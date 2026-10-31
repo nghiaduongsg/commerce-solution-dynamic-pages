@@ -20,5 +20,11 @@
     "avatar": "Ảnh đại diện",
     "filterCategories": "Lọc danh mục",
     "letter": "Thư"
+  },
+  "detailTable": {
+    "empty": "Không có mục nào để hiển thị.",
+    "viewDetails": "Xem chi tiết {{name}}",
+    "close": "Đóng",
+    "tableLabel": "Bảng chi tiết"
   }
 }

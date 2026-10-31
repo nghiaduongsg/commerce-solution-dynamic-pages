@@ -47,6 +47,7 @@ module.exports = {
     'lodash/debounce': '<rootDir>/packages/__mocks__/lodash-debounce.ts',
     '^@_jestHelpers(.*)$': '<rootDir>/packages/_jestHelpers$1',
     '^@pkg-common(.*)$': '<rootDir>/packages/common/src$1',
+    '^@pkg-theme(.*)$': '<rootDir>/packages/theme$1',
     '^@pkg-core(.*)$': '<rootDir>/packages/core$1',
     '^@pkg-setup(.*)$': '<rootDir>/packages/setup$1',
     '@pkg-list-types': '<rootDir>/packages/list/src/types.d.ts',

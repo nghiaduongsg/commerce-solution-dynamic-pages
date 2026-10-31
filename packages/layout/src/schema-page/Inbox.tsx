@@ -195,7 +195,6 @@ export default function Inbox({
         <Suspense fallback={<div role="status">{t('loadingWorkspace')}</div>}>
           <ConnectionSettings
             baseUrl={data.source?.url}
-            pageId={actions.connection?.page_id}
             busy={!!actions.busy}
             onClose={() => setSettingsOpen(false)}
             onSave={async (id, token) => {

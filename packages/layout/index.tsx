@@ -12,5 +12,7 @@ export { registerIconResolver } from './src/common/utils';
 
 export { default as SchemaPage } from './src/schema-page/SchemaPage';
 export type { SchemaPageProps } from './src/schema-page/SchemaPage';
+export { AuthActionError, AuthAdapterProvider } from './src/schema-page/auth/AuthAdapter';
+export type { AuthAdapter, AuthErrorCode } from './src/schema-page/auth/AuthAdapter';
 
 export { WORKSPACE_TRANSLATIONS } from './src/schema-page/translations';

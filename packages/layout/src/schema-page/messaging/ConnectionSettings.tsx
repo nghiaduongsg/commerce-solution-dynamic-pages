@@ -5,13 +5,11 @@ import { FacebookConfig, prepareFacebook, loginFacebook } from './facebookLogin'
 
 type PageChoice = { id: string; name: string; ticket: string };
 export default function ConnectionSettings({
-  pageId,
   busy,
   onSave,
   onClose,
   baseUrl,
 }: {
-  pageId?: string;
   baseUrl?: string;
   busy: boolean;
   onSave: (id: string, ticket: string) => Promise<boolean>;
@@ -21,7 +19,6 @@ export default function ConnectionSettings({
   const [config, setConfig] = useState<FacebookConfig>();
   const [pages, setPages] = useState<PageChoice[]>([]);
   const [id, setId] = useState('');
-  const [manualId, setManualId] = useState(pageId || '');
   const [token, setToken] = useState('');
   const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
@@ -51,6 +48,38 @@ export default function ConnectionSettings({
       controller.abort();
     };
   }, [baseUrl]);
+  const showPages = (choices: PageChoice[]) => {
+    setPages(choices);
+    setId(choices[0]?.id || '');
+    if (!choices.length) setError('facebookNoPages');
+  };
+  const findPages = () => {
+    const credential = token.trim();
+    if (busy || working || inFlight.current || !credential) return;
+    inFlight.current = true;
+    setWorking(true);
+    setError('');
+    setPages([]);
+    axios
+      .post(`${baseUrl}/connection/pages`, { access_token: credential })
+      .then(({ data }) => {
+        if (!active.current) return;
+        setToken('');
+        showPages(data.pages);
+      })
+      .catch((e) => {
+        if (active.current)
+          setError(
+            e.response?.data?.error?.code === 'meta_token_expired'
+              ? 'errors.meta_token_expired'
+              : 'facebookTokenInvalid',
+          );
+      })
+      .finally(() => {
+        inFlight.current = false;
+        if (active.current) setWorking(false);
+      });
+  };
   const login = () => {
     if (!config || busy || inFlight.current) return;
     inFlight.current = true;
@@ -64,9 +93,7 @@ export default function ConnectionSettings({
       )
       .then(({ data }) => {
         if (!active.current) return;
-        setPages(data.pages);
-        setId(data.pages[0]?.id || '');
-        if (!data.pages.length) setError('facebookNoPages');
+        showPages(data.pages);
       })
       .catch((e) => {
         if (active.current)
@@ -135,31 +162,11 @@ export default function ConnectionSettings({
         <p>{t('connectionHelp')}</p>
         <form
           aria-label={t('manualConnection')}
-          onSubmit={async (event) => {
+          onSubmit={(event) => {
             event.preventDefault();
-            if (busy || working || inFlight.current || !manualId.trim() || !token.trim()) return;
-            inFlight.current = true;
-            setWorking(true);
-            const credential = token.trim();
-            setToken('');
-            try {
-              if (await onSave(manualId.trim(), credential)) onClose();
-            } finally {
-              inFlight.current = false;
-              if (active.current) setWorking(false);
-            }
+            findPages();
           }}
         >
-          <label>
-            {t('facebookPageId')}
-            <input
-              value={manualId}
-              onChange={(event) => setManualId(event.target.value)}
-              required
-              autoComplete="off"
-              disabled={busy || working}
-            />
-          </label>
           <label>
             {t('facebookAccessToken')}
             <input
@@ -174,9 +181,9 @@ export default function ConnectionSettings({
           <button
             className="inbox-resolve"
             type="submit"
-            disabled={busy || working || !manualId.trim() || !token.trim()}
+            disabled={busy || working || !token.trim()}
           >
-            {t('saveConnection')}
+            {t(working ? 'findingPages' : 'findPages')}
           </button>
         </form>
       </details>
@@ -186,4 +193,3 @@ export default function ConnectionSettings({
     </section>
   );
 }
-

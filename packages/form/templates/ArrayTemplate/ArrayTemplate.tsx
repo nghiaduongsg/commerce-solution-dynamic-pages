@@ -3,6 +3,7 @@ import React from 'react';
 import BasicTemplate from './BasicTemplate/BasicTemplate';
 import TreeTemplate from './TreeTemplate/TreeTemplate';
 import CardsTemplate from './CardsTemplate/CardsTemplate';
+import TableTemplate from './TableTemplate/TableTemplate';
 import { ArrayTemplateProps } from './ArrayTemplate.d';
 import { AnyType } from '@pkg-common/types';
 
@@ -54,6 +55,10 @@ const ArrayTemplate = (props: ArrayTemplateProps) => {
 
   if (arrayType === 'tree') {
     return <TreeTemplate {...finalProps} />;
+  }
+
+  if (arrayType === 'table') {
+    return <TableTemplate {...finalProps} />;
   }
 
   if (arrayType === 'basic') {

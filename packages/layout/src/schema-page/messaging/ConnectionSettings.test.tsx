@@ -69,24 +69,45 @@ test('Vietnamese login controls and empty Page state', async () => {
   expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
 });
 
-test('manual token connection works when Facebook login is not configured', async () => {
+test('pasted token lists Pages to choose from when Facebook login is not configured', async () => {
   get.mockRejectedValue({ response: { data: { error: { code: 'facebook_not_configured' } } } });
+  post.mockResolvedValue({
+    data: {
+      pages: [
+        { id: '1', name: 'First Shop', ticket: 'opaque-1' },
+        { id: '2', name: 'Second Shop', ticket: 'opaque-2' },
+      ],
+    },
+  });
   const save = jest.fn(() => Promise.resolve(true));
   const close = jest.fn();
-  render(
-    <ConnectionSettings pageId="123" baseUrl="/inbox" busy={false} onSave={save} onClose={close} />,
-  );
+  render(<ConnectionSettings baseUrl="/inbox" busy={false} onSave={save} onClose={close} />);
   await screen.findByRole('alert');
   fireEvent.click(screen.getByText('Enter access token manually'));
+  expect(screen.queryByLabelText('Facebook Page ID')).not.toBeInTheDocument();
   const input = screen.getByLabelText('Facebook access token');
   expect(input).toHaveAttribute('type', 'password');
-  expect(screen.getByLabelText('Facebook Page ID')).toHaveValue('123');
-  fireEvent.change(input, { target: { value: '  test-page-token  ' } });
-  fireEvent.submit(input.closest('form')!);
-  await waitFor(() => expect(save).toHaveBeenCalledWith('123', 'test-page-token'));
+  fireEvent.change(input, { target: { value: '  test-user-token  ' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Find Pages' }));
+  expect(post).toHaveBeenCalledWith('/inbox/connection/pages', {
+    access_token: 'test-user-token',
+  });
+  fireEvent.change(await screen.findByLabelText('Facebook Page'), { target: { value: '2' } });
   expect(input).toHaveValue('');
-  expect(close).toHaveBeenCalledTimes(1);
+  fireEvent.submit(screen.getByLabelText('Facebook Page').closest('form')!);
+  await waitFor(() => expect(save).toHaveBeenCalledWith('2', 'opaque-2'));
+  await waitFor(() => expect(close).toHaveBeenCalledTimes(1));
   expect(login).not.toHaveBeenCalled();
-  expect(post).not.toHaveBeenCalled();
 });
-
+test('rejected pasted token shows an error and no Page picker', async () => {
+  await testI18n.changeLanguage('VI');
+  post.mockRejectedValue({ response: { data: { error: { code: 'meta_rejected' } } } });
+  const save = jest.fn();
+  render(<ConnectionSettings baseUrl="/inbox" busy={false} onSave={save} onClose={jest.fn()} />);
+  fireEvent.click(screen.getByText('Nhập mã truy cập thủ công'));
+  fireEvent.change(screen.getByLabelText('Mã truy cập Facebook'), { target: { value: 'bad' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Tìm Trang' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Không thể tải Trang bằng mã này');
+  expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  expect(save).not.toHaveBeenCalled();
+});
